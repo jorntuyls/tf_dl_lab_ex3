@@ -1,0 +1,5 @@
+# ignore .gz files
+*.gz
+
+# ignore compiled python files
+*.pyc

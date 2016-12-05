@@ -304,7 +304,7 @@ if __name__ == '__main__':
     nfilters = 32               # number of convolutional filters in each layer
     time_limit = 10000          # .. seconds, huge value to disable this option
 
-    iscenario = 1
+    iscenario = 5
 
     if (iscenario == 1):
         ntrain = 5000           # reduce the size of the training set by a factor of 10 to save 10x time
