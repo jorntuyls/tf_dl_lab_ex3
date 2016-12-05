@@ -34,7 +34,7 @@ class Master:
         return lastline
 
 
-    def main(self, nb_workers=2, confs=5):
+    def main(self, nb_workers=2, confs=50):
         worker_file_list = []
 
         for i in range(0,nb_workers):
@@ -44,7 +44,6 @@ class Master:
             nfilters, batch_size_train, M, LR = self.get_random_variables()
             f.write("{}\t{}\t{}\t{}".format(nfilters,batch_size_train,M,LR))
             f.close()
-            print("Configuration: {}".format(1))
             worker_file_list.append(filename)
 
         counter = 1
@@ -54,6 +53,7 @@ class Master:
 
                 if self.read_last_line(filename).strip() == "":
                     # append configuration (=firstline) to solution file
+                    print("Configuration: {}".format(counter))
                     firstline = self.read_first_line(filename)
                     f = open("solution_master_slave","a")
                     f.write(firstline)
@@ -64,7 +64,6 @@ class Master:
                     self.write_new_line(filename,strng)
 
                     counter += 1
-                    print("Configuration: {}".format(counter))
 
             if counter > confs:
                 for filename in worker_file_list:

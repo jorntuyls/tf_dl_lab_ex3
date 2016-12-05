@@ -273,13 +273,13 @@ class Worker:
         # lasagne.layers.set_all_param_values(network, param_values)
 
     def main(self, worker_nb=0):
-        ntrain = 1000          # the whole training set
-        nvalid = 1000          #
-        ntest = 1000           #
+        ntrain = 50000          # the whole training set
+        nvalid = 10000          #
+        ntest = 10000           #
         batch_size_valid = 500  # does not influence training process, but reduces time loss from validation
         batch_size_test = 500   # same here
         num_epochs = 100000     # to disable this stopping criterion
-        time_limit = 5         # training time is limited to 60 seconds
+        time_limit = 60         # training time is limited to 60 seconds
 
         algorithm_type = 2  # SGD with momentum
         irun = 1  # one run only
@@ -315,4 +315,4 @@ class Worker:
 
 if __name__ == '__main__':
     w = Worker()
-    w.main()
+    w.main(sys.argv[1])
