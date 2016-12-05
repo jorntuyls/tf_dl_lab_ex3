@@ -12,7 +12,7 @@ import theano.tensor as T
 import lasagne
 
 class Worker:
-    
+
     def load_dataset(self):
         # We first define a download function, supporting both Python 2 and 3.
         if sys.version_info[0] == 2:
@@ -64,7 +64,7 @@ class Worker:
         # We just return all the arrays in order, as expected in main().
         # (It doesn't matter how we do this as long as we can read them again.)
         return X_train, y_train, X_val, y_val, X_test, y_test
-    
+
     def build_cnn(self, input_var=None, nfilters = 32):
         # As a third model, we'll create a CNN of two convolution + pooling stages
         # and a fully-connected hidden layer in front of the output layer.
@@ -131,7 +131,7 @@ class Worker:
             else:
                 excerpt = slice(start_idx, start_idx + batchsize)
             yield inputs[excerpt], targets[excerpt]
-            
+
     # ############################## Main program ################################
     # Everything else will be handled in our main program now. We could pull out
     # more functions to better separate the code, but it wouldn't make it any
@@ -271,48 +271,48 @@ class Worker:
         # with np.load('model.npz') as f:
         #     param_values = [f['arr_%d' % i] for i in range(len(f.files))]
         # lasagne.layers.set_all_param_values(network, param_values)
-        
+
     def main(self, worker_nb=0):
-        ntrain = 5000          # the whole training set
+        ntrain = 1000          # the whole training set
         nvalid = 1000          #
         ntest = 1000           #
         batch_size_valid = 500  # does not influence training process, but reduces time loss from validation
         batch_size_test = 500   # same here
         num_epochs = 100000     # to disable this stopping criterion
-        time_limit = 10         # training time is limited to 60 seconds
+        time_limit = 5         # training time is limited to 60 seconds
 
         algorithm_type = 2  # SGD with momentum
         irun = 1  # one run only
         mexevaluations = 200
         nvariables = 4
-        
+
         filename = "worker_{}".format(worker_nb)
         while(True):
-            f = open(filename,'a+')
+            f = open(filename,'r+')
             lines = f.readlines()
-            lastline = lines[-1]
-            if lastline.strip() != '':
-                lst = lastline.split()
-                nfilters = int(lst[0])
-                batch_size_train = int(lst[1])
-                M = float(lst[2])
-                LR = float(lst[3])
-                
-                print("nfilters: {}\tbatch_size_train: {}\t M: {:.6f}\t LR: {:.6f}".format(nfilters, batch_size_train, M, LR))
-                
-                results = self.get_result(ntrain, nvalid, ntest, algorithm_type, batch_size_train, batch_size_valid, batch_size_test, num_epochs, "stat.txt", LR, M, nfilters, time_limit)
-                
-                best_val_acc = results[0]
-                total_time = results[1]
-                nparameters = float(results[2])
-                f.write("\t{}\t{}\t{}\n".format(best_val_acc,total_time,nparameters))
-                f.write('\n')
-            print("test")
+            if lines != []:
+                lastline = lines[-1]
+                if lastline.strip() == 'stop':
+                    break
+                elif lastline.strip() != '':
+                    lst = lastline.split()
+                    nfilters = int(lst[0])
+                    batch_size_train = int(lst[1])
+                    M = float(lst[2])
+                    LR = float(lst[3])
+
+                    print("nfilters: {}\tbatch_size_train: {}\t M: {:.6f}\t LR: {:.6f}".format(nfilters, batch_size_train, M, LR))
+
+                    results = self.get_result(ntrain, nvalid, ntest, algorithm_type, batch_size_train, batch_size_valid, batch_size_test, num_epochs, "stat.txt", LR, M, nfilters, time_limit)
+
+                    best_val_acc = results[0]
+                    total_time = results[1]
+                    nparameters = float(results[2])
+                    f.write("\t{}\t{}\t{}\n".format(best_val_acc,total_time,nparameters))
+                    f.write('\n')
+
             f.close()
-                        
+
 if __name__ == '__main__':
     w = Worker()
     w.main()
-        
-        
-    
