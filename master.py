@@ -1,5 +1,6 @@
 
 import numpy as np
+import time
 
 class Master:
 
@@ -34,7 +35,8 @@ class Master:
         return lastline
 
 
-    def main(self, nb_workers=2, confs=50):
+    def main(self, nb_workers=2, confs=400):
+        start = time.time()
         worker_file_list = []
 
         for i in range(0,nb_workers):
@@ -44,11 +46,12 @@ class Master:
             nfilters, batch_size_train, M, LR = self.get_random_variables()
             f.write("{}\t{}\t{}\t{}".format(nfilters,batch_size_train,M,LR))
             f.close()
+            f = open("solution_master_slave","w")
+            f.close()
             worker_file_list.append(filename)
 
         counter = 1
         while(True):
-
             for filename in worker_file_list:
 
                 if self.read_last_line(filename).strip() == "":
@@ -69,6 +72,11 @@ class Master:
                 for filename in worker_file_list:
                     self.write_new_line(filename,"stop")
                 break
+        stop = time.time()
+        total = stop - start
+        f = open("timing","w")
+        f.write("Total time: {}".format(total))
+        f.close()
 
 if __name__ == '__main__':
     m = Master()
