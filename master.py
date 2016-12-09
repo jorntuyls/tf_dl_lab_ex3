@@ -53,8 +53,7 @@ class Master:
         counter = 1
         while(True):
             for filename in worker_file_list:
-
-                if self.read_last_line(filename).strip() == "":
+                if self.read_last_line(filename).strip() == "next":
                     # append configuration (=firstline) to solution file
                     print("Configuration: {}".format(counter))
                     firstline = self.read_first_line(filename)

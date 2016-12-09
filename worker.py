@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+
+"""
+Usage example employing Lasagne for digit recognition using the MNIST dataset.
+
+This example is deliberately structured as a long flat file, focusing on how
+to use Lasagne, instead of focusing on writing maximally modular and reusable
+code. It is used as the foundation for the introductory Lasagne tutorial:
+http://lasagne.readthedocs.org/en/latest/user/tutorial.html
+
+More in-depth examples and reproductions of paper results are maintained in
+a separate repository: https://github.com/Lasagne/Recipes
+"""
 
 from __future__ import print_function
 
@@ -272,6 +285,38 @@ class Worker:
         #     param_values = [f['arr_%d' % i] for i in range(len(f.files))]
         # lasagne.layers.set_all_param_values(network, param_values)
 
+    def write_new_line(self,filename,strng):
+        f = open(filename,'w')
+        f.write(strng)
+        f.close()
+
+    def append_new_line(self,filename,strng):
+        f = open(filename,'a+')
+        f.write(strng)
+        f.close()
+
+    def read_first_line(self,filename):
+        f = open(filename,'r')
+        line = f.readline()
+        f.close()
+        return line
+
+    def read_last_line(self,filename):
+        f = open(filename,'r')
+        lines = f.readlines()
+        if lines != []:
+            lastline = lines[-1]
+        else:
+            lastline = ""
+        f.close()
+        return lastline
+
+    def stopping_criterium(self, filename):
+        return self.read_last_line(filename).strip() == "stop"
+
+    def next_criterium(self, filename):
+        return self.read_last_line(filename).strip() == "next"
+
     def main(self, worker_nb=0):
         ntrain = 50000          # the whole training set
         nvalid = 10000          #
@@ -288,31 +333,42 @@ class Worker:
 
         filename = "worker_{}".format(worker_nb)
         while(True):
-            f = open(filename,'r+')
-            lines = f.readlines()
-            if lines != []:
-                lastline = lines[-1]
-                if lastline.strip() == 'stop':
-                    break
-                elif lastline.strip() != '':
-                    lst = lastline.split()
-                    nfilters = int(lst[0])
-                    batch_size_train = int(lst[1])
-                    M = float(lst[2])
-                    LR = float(lst[3])
+            # Stopping criterium means that work is done
+            if not(self.stopping_criterium(filename)):
+                # If next criterium is satisfied, this worker should wait for the
+                #   master to give a new configuration
+                if not(self.next_criterium(filename)):
+                    # Read the configuration line
+                    line = self.read_first_line(filename)
+                    if line.strip() != '':
+                        lst = line.split()
+                        # Initialize values
+                        nfilters = int(lst[0])
+                        batch_size_train = int(lst[1])
+                        M = float(lst[2])
+                        LR = float(lst[3])
 
-                    print("nfilters: {}\tbatch_size_train: {}\t M: {:.6f}\t LR: {:.6f}".format(nfilters, batch_size_train, M, LR))
+                        print("nfilters: {}\tbatch_size_train: {}\t M: {:.6f}\t LR: {:.6f}".format(nfilters, batch_size_train, M, LR))
 
-                    results = self.get_result(ntrain, nvalid, ntest, algorithm_type, batch_size_train, batch_size_valid, batch_size_test, num_epochs, "stat.txt", LR, M, nfilters, time_limit)
+                        # Get result from ccn with given configuration
+                        results = self.get_result(ntrain, nvalid, ntest, algorithm_type, batch_size_train, batch_size_valid, batch_size_test, num_epochs, "stat.txt", LR, M, nfilters, time_limit)
 
-                    best_val_acc = results[0]
-                    total_time = results[1]
-                    nparameters = float(results[2])
-                    f.write("\t{}\t{}\t{}\n".format(best_val_acc,total_time,nparameters))
-                    f.write('\n')
+                        best_val_acc = results[0]
+                        total_time = results[1]
+                        nparameters = float(results[2])
+                        # Check stopping criterium again
+                        if not(self.stopping_criterium(filename)):
+                            # Write configuration and result
+                            self.write_new_line(filename,"{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(nfilters,batch_size_train,
+                                    M,LR,best_val_acc,total_time,nparameters))
+                            # Add "next" to last line so master knows it can give a new configuration
+                            self.append_new_line(filename,"next")
+                        else:
+                            break
+            else:
+                break
 
-            f.close()
-
+# Initialize worker in command line with command: python worker.py 0, to initialize worker 0
 if __name__ == '__main__':
     w = Worker()
     w.main(sys.argv[1])
